@@ -1,11 +1,23 @@
+def downloadTerraform(){
+  if (!fileExists('terraform')) {
+    sh "curl -o  terraform_0.8.7_linux_amd64.zip https://releases.hashicorp.com/terraform/0.8.7/terraform_0.8.7_linux_amd64.zip && unzip -o terraform_0.8.7_linux_amd64.zip && chmod 777 terraform"
+  } else {
+    println("terraform already downloaded")
+  }
+}
+
   pipeline {
        agent any 
+       environment {
+                    PATH = "$PATH:${env.WORKSPACE}"
+  }
 
        stages {
            stage('install'){
+             steps {
              downloadTerraform()
-             env.PATH = "${env.PATH}:${env.WORKSPACE}"
-    }
+                 }
+           }
 
            stage('init') {
              steps {
@@ -22,23 +34,7 @@
       steps {
          sh 'terraform apply'    
     }
-  }
-if(pullRequest){
-  return
-}
 
 }
 }
-
-// -----------
-// Functions
-// -----------
-
-
-def downloadTerraform(){
-  if (!fileExists('terraform')) {
-    sh "curl -o  terraform_0.8.7_linux_amd64.zip https://releases.hashicorp.com/terraform/0.8.7/terraform_0.8.7_linux_amd64.zip && unzip -o terraform_0.8.7_linux_amd64.zip && chmod 777 terraform"
-  } else {
-    println("terraform already downloaded")
-  }
 }
