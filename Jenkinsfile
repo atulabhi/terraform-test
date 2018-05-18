@@ -1,23 +1,44 @@
-node {
-   stage 'checkout'
-        checkout scm
+  pipeline {
+       agent any 
 
-   stage 'test'
-        parallel (
-            phase1: { sh "echo p1; sleep 20s; echo phase1" },
-            phase2: { sh "echo p2; sleep 40s; echo phase2" }
-        )
-   stage name: 'build', concurrency: 1
-        sh "packer build project.json"
+       stages {
+           stage('install'){
+             downloadTerraform()
+             env.PATH = "${env.PATH}:${env.WORKSPACE}"
+    }
 
-   stage name: 'plan', concurrency: 1
-        sh "terraform plan --out plan"
+           stage('init') {
+             steps {
+                 sh  'terraform init'
+      }
+    }
 
-   stage name: 'deploy', concurrency: 1
-        def deploy_validation = input(
-            id: 'Deploy',
-            message: 'Let\'s continue the deploy plan',
-            type: "boolean")
+           stage('plan'){
+             steps {
+                 sh 'terraform plan'
+    }
+  }
+   stage('apply'){
+      steps {
+         sh 'terraform apply'    
+    }
+  }
+if(pullRequest){
+  return
+}
 
-        sh "terraform apply plan"
+}
+}
+
+// -----------
+// Functions
+// -----------
+
+
+def downloadTerraform(){
+  if (!fileExists('terraform')) {
+    sh "curl -o  terraform_0.8.7_linux_amd64.zip https://releases.hashicorp.com/terraform/0.8.7/terraform_0.8.7_linux_amd64.zip && unzip -o terraform_0.8.7_linux_amd64.zip && chmod 777 terraform"
+  } else {
+    println("terraform already downloaded")
+  }
 }
