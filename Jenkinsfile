@@ -19,20 +19,21 @@ def downloadTerraform(){
                  }
            }
 
-           stage('init') {
+           stage('plan') {
              steps {
-                 sh  'terraform init'
+                 sh  'terraform plan -out plan.plan'
       }
     }
 
-           stage('plan'){
+           stage('show'){
              steps {
-                 sh 'terraform plan'
+                  sh "terraform show   plan.plan"
+                  archiveArtifacts 'plan.plan'
     }
   }
    stage('apply'){
       steps {
-         sh 'terraform apply'    
+         sh 'terraform apply plan.plan'    
     }
 
 }
